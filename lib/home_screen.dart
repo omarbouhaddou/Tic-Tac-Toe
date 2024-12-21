@@ -11,7 +11,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  final List<String> matchHistory = []; 
 
   @override
   void initState() {
@@ -33,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       body: Stack(
         children: [
+          // Dégradé d'arrière-plan
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Message de bienvenue
               Padding(
                 padding: const EdgeInsets.only(top: 50),
                 child: Column(
@@ -65,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
                 ),
               ),
+              // Animation du titre
               ScaleTransition(
                 scale: Tween<double>(begin: 0.9, end: 1.1).animate(CurvedAnimation(
                   parent: _controller,
@@ -91,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
                 ),
               ),
+              // Boutons de navigation
               Column(
                 children: [
                   ElevatedButton(
@@ -106,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TicTacToe(matchHistory: matchHistory),
+                          builder: (context) => const TicTacToe(),
                         ),
                       );
                     },
@@ -133,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => HistoryScreen(history: matchHistory),
+                          builder: (context) => const HistoryScreen(),
                         ),
                       );
                     },
@@ -148,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+              // Pied de page
               Column(
                 children: const [
                   Divider(color: Colors.white54),

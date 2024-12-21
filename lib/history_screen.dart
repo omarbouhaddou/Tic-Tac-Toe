@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HistoryScreen extends StatelessWidget {
-  final List<String> history;
-
-  const HistoryScreen({Key? key, required this.history}) : super(key: key);
+  const HistoryScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,43 +39,69 @@ class HistoryScreen extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: history.isEmpty
-                    ? const Center(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('match_history') // Nom de votre collection Firestore
+                      .orderBy('matches_played', descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      );
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
                         child: Text(
                           'No matches played yet!',
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12.0),
-                        itemCount: history.length,
-                        itemBuilder: (context, index) {
-                          return Card(
-                            elevation: 5,
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      );
+                    }
+
+                    final players = snapshot.data!.docs;
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(12.0),
+                      itemCount: players.length,
+                      itemBuilder: (context, index) {
+                        final player = players[index];
+                        final data = player.data() as Map<String, dynamic>;
+                        return Card(
+                          elevation: 5,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          color: Colors.white,
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.sports_esports,
+                              color: Colors.blueAccent,
                             ),
-                            color: Colors.white,
-                            child: ListTile(
-                              leading: const Icon(Icons.sports_esports,
-                                  color: Colors.blueAccent),
-                              title: Text(
-                                history[index],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              trailing: const Icon(
-                                Icons.emoji_events,
-                                color: Colors.orangeAccent,
+                            title: Text(
+                              data['name'] ?? 'Unknown',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
                               ),
                             ),
-                          );
-                        },
-                      ),
+                            subtitle: Text(
+                              'Matches Played: ${data['matches_played'] ?? 0}',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            trailing: const Icon(
+                              Icons.emoji_events,
+                              color: Colors.orangeAccent,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),

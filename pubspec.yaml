@@ -31,6 +31,14 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Firebase Core (obligatoire pour tous les services Firebase)
+  firebase_core: ^2.16.0
+
+  # Firebase Authentication (si vous voulez gérer l'inscription/connexion des joueurs)
+  firebase_auth: ^4.8.0
+
+  # Cloud Firestore (pour stocker les données des joueurs, leurs scores, etc.)
+  cloud_firestore: ^4.10.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
