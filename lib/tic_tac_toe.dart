@@ -13,43 +13,48 @@ class TicTacToe extends StatefulWidget {
 }
 
 class _TicTacToeState extends State<TicTacToe> {
-  List<String> board = List.filled(9, '');
-  String currentPlayer = 'X';
-  String playerXName = 'Player X';
-  String playerOName = 'Player O';
-  bool gameOver = false;
-  bool isPlayingWithRobot = false;
-  Timer? timer;
-  int timeLeft = 30;
+  // Représentation de la grille de jeu sous forme de tableau
+  List<String> board = List.filled(9, ''); // 9 cases initialisées comme vides
+  String currentPlayer = 'X'; // Joueur en cours (X ou O)
+  String playerXName = 'Player X'; // Nom du joueur X
+  String playerOName = 'Player O'; // Nom du joueur O
+  bool gameOver = false; // Indique si la partie est terminée
+  bool isPlayingWithRobot = false; // Mode de jeu : contre robot ou contre joueur
+  Timer? timer; // Chronomètre pour limiter le temps d'un tour
+  int timeLeft = 30; // Temps restant pour le joueur actuel en secondes
 
   @override
   void initState() {
     super.initState();
+    // Affiche le choix du mode de jeu au démarrage de la partie
     WidgetsBinding.instance.addPostFrameCallback((_) => _chooseModeDialog());
   }
 
+  // Affiche une boîte de dialogue pour choisir le mode de jeu
   void _chooseModeDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // Empêche la fermeture sans choisir une option
       builder: (context) {
         return AlertDialog(
           title: const Text('Choose Mode'),
           content: const Text('Do you want to play with a robot or another player?'),
           actions: [
+            // Mode joueur contre joueur
             TextButton(
               onPressed: () {
                 setState(() => isPlayingWithRobot = false);
-                Navigator.pop(context);
-                _showPlayerNameDialog();
+                Navigator.pop(context); // Fermer la boîte de dialogue
+                _showPlayerNameDialog(); // Demander les noms des joueurs
               },
               child: const Text('Player vs Player'),
             ),
+            // Mode joueur contre robot
             TextButton(
               onPressed: () {
                 setState(() => isPlayingWithRobot = true);
-                Navigator.pop(context);
-                _showPlayerNameDialog();
+                Navigator.pop(context); // Fermer la boîte de dialogue
+                _showPlayerNameDialog(); // Demander le nom du joueur
               },
               child: const Text('Player vs Robot'),
             ),
@@ -59,13 +64,14 @@ class _TicTacToeState extends State<TicTacToe> {
     );
   }
 
+  // Affiche une boîte de dialogue pour entrer les noms des joueurs
   void _showPlayerNameDialog() {
     TextEditingController playerXController = TextEditingController();
     TextEditingController playerOController = TextEditingController();
 
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // Empêche la fermeture sans entrer de noms
       builder: (context) {
         return AlertDialog(
           title: const Text('Enter Player Names'),
@@ -76,6 +82,7 @@ class _TicTacToeState extends State<TicTacToe> {
                 controller: playerXController,
                 decoration: const InputDecoration(labelText: 'Player X'),
               ),
+              // Ne demander que pour le joueur O si le mode n'est pas contre le robot
               if (!isPlayingWithRobot)
                 TextField(
                   controller: playerOController,
@@ -87,13 +94,14 @@ class _TicTacToeState extends State<TicTacToe> {
             TextButton(
               onPressed: () {
                 setState(() {
+                  // Enregistrer les noms des joueurs
                   playerXName = playerXController.text.isEmpty ? 'Player X' : playerXController.text;
                   playerOName = isPlayingWithRobot
                       ? 'Robot'
                       : (playerOController.text.isEmpty ? 'Player O' : playerOController.text);
                 });
-                Navigator.pop(context);
-                _startTimer();
+                Navigator.pop(context); // Fermer la boîte de dialogue
+                _startTimer(); // Lancer le chronomètre pour le premier joueur
               },
               child: const Text('Start Game'),
             ),
@@ -103,84 +111,85 @@ class _TicTacToeState extends State<TicTacToe> {
     );
   }
 
+  // Lancer un chronomètre pour le joueur en cours
   void _startTimer() {
     timer?.cancel();
-    setState(() => timeLeft = 30);
+    setState(() => timeLeft = 30); // Réinitialiser le chronomètre à 30 secondes
     timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
       setState(() {
         timeLeft--;
-        if (timeLeft == 0) _handleTimeout();
+        if (timeLeft == 0) _handleTimeout(); // Gérer le dépassement de temps
       });
     });
   }
 
+  // Changer de joueur en cas de dépassement de temps
   void _handleTimeout() {
     if (!gameOver) {
       setState(() {
-        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-        if (isPlayingWithRobot && currentPlayer == 'O') _robotMove();
-        _startTimer();
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X'; // Alterner le joueur
+        if (isPlayingWithRobot && currentPlayer == 'O') _robotMove(); // Le robot joue automatiquement
+        _startTimer(); // Redémarrer le chronomètre
       });
     }
   }
 
+  // Gérer le clic sur une case de la grille
   void _handleTap(int index) {
-    if (board[index] == '' && !gameOver) {
+    if (board[index] == '' && !gameOver) { // Vérifier si la case est vide et si le jeu n'est pas terminé
       setState(() {
-        board[index] = currentPlayer;
-        if (_checkWinner()) {
+        board[index] = currentPlayer; // Marquer la case avec le symbole du joueur
+        if (_checkWinner()) { // Vérifier si le joueur a gagné
           gameOver = true;
           String winner = currentPlayer == 'X' ? playerXName : playerOName;
-          _saveMatchResult(winner);
-          _showWinnerScreen(winner);
-          timer?.cancel();
-        } else if (!board.contains('')) {
+          _saveMatchResult(winner); // Enregistrer le résultat dans Firestore
+          _showWinnerScreen(winner); // Afficher l'écran de victoire
+          timer?.cancel(); // Arrêter le chronomètre
+        } else if (!board.contains('')) { // Vérifier s'il y a une égalité
           gameOver = true;
-          _showDrawScreen();
+          _showDrawScreen(); // Afficher un message d'égalité
           timer?.cancel();
         } else {
-          currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
-          if (isPlayingWithRobot && currentPlayer == 'O') _robotMove();
-          _startTimer();
+          currentPlayer = currentPlayer == 'X' ? 'O' : 'X'; // Changer de joueur
+          if (isPlayingWithRobot && currentPlayer == 'O') _robotMove(); // Le robot joue automatiquement
+          _startTimer(); // Redémarrer le chronomètre
         }
       });
     }
   }
 
+  // Logique pour le robot : jouer un coup aléatoire
   void _robotMove() {
     Future.delayed(const Duration(milliseconds: 500), () {
-      List<int> emptyCells = [];
+      List<int> emptyCells = []; // Trouver les cases vides
       for (int i = 0; i < board.length; i++) {
         if (board[i] == '') emptyCells.add(i);
       }
       if (emptyCells.isNotEmpty) {
-        int randomIndex = emptyCells[Random().nextInt(emptyCells.length)];
-        _handleTap(randomIndex);
+        int randomIndex = emptyCells[Random().nextInt(emptyCells.length)]; // Sélection aléatoire
+        _handleTap(randomIndex); // Marquer la case choisie
       }
     });
   }
 
+  // Vérifier si un joueur a gagné
   bool _checkWinner() {
     List<List<int>> winningCombinations = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Lignes
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colonnes
+      [0, 4, 8], [2, 4, 6],            // Diagonales
     ];
     for (var combo in winningCombinations) {
       if (board[combo[0]] == currentPlayer &&
           board[combo[1]] == currentPlayer &&
           board[combo[2]] == currentPlayer) {
-        return true;
+        return true; // Une combinaison gagnante est trouvée
       }
     }
-    return false;
+    return false; // Aucun gagnant trouvé
   }
 
+  // Enregistrer le résultat du match dans Firestore
   Future<void> _saveMatchResult(String winner) async {
     try {
       final firestore = FirebaseFirestore.instance;
@@ -188,13 +197,14 @@ class _TicTacToeState extends State<TicTacToe> {
 
       await playerDoc.set({
         'name': winner,
-        'matches_played': FieldValue.increment(1),
-      }, SetOptions(merge: true));
+        'matches_played': FieldValue.increment(1), // Incrémenter le nombre de matchs
+      }, SetOptions(merge: true)); // Met à jour ou crée un nouveau document
     } catch (e) {
       print('Erreur lors de l\'enregistrement du match : $e');
     }
   }
 
+  // Afficher l'écran de victoire
   void _showWinnerScreen(String winner) {
     Navigator.push(
       context,
@@ -202,6 +212,7 @@ class _TicTacToeState extends State<TicTacToe> {
     ).then((_) => _resetGame());
   }
 
+  // Afficher un message d'égalité
   void _showDrawScreen() {
     showDialog(
       context: context,
@@ -223,13 +234,14 @@ class _TicTacToeState extends State<TicTacToe> {
     );
   }
 
+  // Réinitialiser le jeu
   void _resetGame() {
     setState(() {
-      board = List.filled(9, '');
-      currentPlayer = 'X';
-      gameOver = false;
+      board = List.filled(9, ''); // Réinitialiser la grille
+      currentPlayer = 'X'; // Revenir au joueur X
+      gameOver = false; // Réinitialiser l'état du jeu
     });
-    _startTimer();
+    _startTimer(); // Redémarrer le chronomètre
   }
 
   @override
